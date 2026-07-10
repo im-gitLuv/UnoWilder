@@ -133,15 +133,23 @@ La Game Bible (sección 3.2) define cuatro unidades de tiempo anidadas: **Partid
 
 ### Capítulo 0 — Preproducción y setup del entorno
 
-**Estado:** Pendiente
+**Estado:** ✅ Completado (2026-07-10)
 
-- Instalar **Godot 4.7** (versión fijada del proyecto, con soporte .NET habilitado para el uso híbrido de C# — ver sección 0.2).
-- Crear repositorio en GitHub, estructura de carpetas base (ver sección 0.1).
-- Configurar `.gitignore` específico de Godot (incluyendo artefactos de compilación de C#/.NET: `.mono/`, `obj/`, `bin/`).
-- Definir convenciones de nombres (snake_case para archivos/nodos GDScript, PascalCase para clases GDScript y C#).
-- Instalar GUT (testing) como addon.
-- Documentar en `docs/` este roadmap y la Game Bible.
-- Definir constante global `MAX_PLAYERS = 8` y `MIN_PLAYERS = 2` (límite oficial, Game Bible 3.1).
+- ✅ Godot 4.7.stable.mono instalado, soporte .NET confirmado.
+- ✅ Repositorio GitHub creado: https://github.com/im-gitLuv/UnoWilder
+- ✅ Repo clonado localmente y vinculado a Git.
+- ✅ Estructura de carpetas base creada (ver sección 0.1).
+- ✅ `.gitignore` actualizado con artefactos de C#/.NET (`.mono/`, `obj/`, `bin/`, etc.).
+- ✅ Convenciones de nombres documentadas en `docs/CODING_CONVENTIONS.md`.
+- ✅ GUT 9.7.0 instalado como **Plugin** (Project Settings → Plugins), no como Autoload — ver nota de arquitectura abajo.
+- ✅ `autoloads/globals.gd` creado y registrado como Autoload (`Globals`), con `MAX_PLAYERS`, `MIN_PLAYERS`, `HAND_LIMIT`, y enums `CardType`, `CardColor`, `CardActionType`, `ElementType`.
+- ✅ `docs/UNOWILDER_GAME_BIBLE.md` y `docs/UNOWILDER_DEV_ROADMAP.md` presentes en el repo.
+- ✅ `README.md` creado en raíz.
+- ✅ Commit inicial pusheado a `main`.
+
+**Nota de arquitectura — GUT como Plugin, no Autoload:** confirmado que las versiones modernas de GUT (9.x) se integran vía el sistema de Plugins de Godot (Project Settings → Plugins), exponiendo su panel de testing en la barra inferior del editor. No requiere (ni debe) registrarse manualmente como Autoload — el plugin gestiona su propia inicialización internamente. Registrarlo también como Autoload arriesgaría doble inicialización.
+
+**Nota de setup — ubicación del proyecto Godot:** el `project.godot` debe vivir en la **raíz** del repositorio, al mismo nivel que `autoloads/`, `core/`, `cards/`, etc. — no en una subcarpeta. Si `New Project` en Godot crea una subcarpeta extra por error, mover todo el contenido a la raíz antes de continuar.
 
 ### Capítulo 1 — Modelo de datos núcleo
 
@@ -322,6 +330,7 @@ La Game Bible (sección 3.2) define cuatro unidades de tiempo anidadas: **Partid
 - [x] ~~Versión exacta de Godot a fijar como target del proyecto~~ — **Resuelto: Godot 4.7.**
 - [x] ~~Decisión de lenguaje: GDScript puro vs. mezcla con C#~~ — **Resuelto: híbrido confirmado.** GDScript para el Core Engine, C# para IA de oponentes (ver sección 0.2 y Cap. 10).
 - [x] ~~Alcance del multijugador: ¿local únicamente en la v1, o online desde el inicio?~~ — **Resuelto:** el juego contempla ambos desde el diseño: Partida Rápida local (IA o amigos, hotseat), salas Online, y Modo Campaña local (Cap. 12). El orden de implementación real entre Cap. 11 (Online) y Cap. 12 (Campaña) queda abierto — ver punto siguiente.
+- [x] ~~Setup completo del Capítulo 0~~ — **Resuelto:** entorno, repo, estructura y constantes globales completados el 2026-07-10. Repo: https://github.com/im-gitLuv/UnoWilder
 - [ ] Catálogo definitivo de tipos de eventos random para el grito de UNO (Cap. 6) — la Game Bible define 4 categorías amplias; falta el detalle fino de cada variante concreta.
 - [ ] Orden de prioridad real de implementación entre Cap. 11 (Multijugador Online) y Cap. 12 (Modo Campaña) — ambos están definidos pero no se ha decidido cuál se aborda primero después del Core Engine (Cap. 1–7) y la IA (Cap. 10).
 - [ ] Mapa de gameplay del Modo Campaña (Cap. 12): niveles concretos, catálogo de bosses con sus penalizaciones temáticas específicas, y diseño de los puzzles — documento aún no producido.
