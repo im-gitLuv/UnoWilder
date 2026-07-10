@@ -154,18 +154,22 @@ La Game Bible (sección 3.2) define cuatro unidades de tiempo anidadas: **Partid
 ### Capítulo 1 — Modelo de datos núcleo
 
 **Objetivo:** tener las clases de datos base sin ninguna lógica de UI todavía.
-**Estado:** Pendiente
+**Estado:** ✅ Completado (2026-07-10)
 
-- `CardData.gd` (Resource): color, **array de tipos** (`CardType`, ver sección 1.3), valor numérico, `draw_value` (si aplica), puntos calculados, id único.
-- `Deck.gd`: colección de `CardData`, métodos `shuffle()`, `draw(n)`, `discard(card)` (sin efecto), `play(card)` (con efecto), `burn(card)` (pila separada, irrecuperable).
-- `PlayerState.gd`: mano, puntos, estado (activo, penalizado, ascendido — gancho para lore).
-- Script generador de la baraja estándar de 128 cartas (Game Bible 4.1–4.3), cubierto por un test unitario que valide el conteo exacto.
-- Test unitario de `get_point_value()` contra la tabla de la Game Bible 3.12 (incluyendo casos multi-tipo: Wild Shift = 50, Wild Draw 4 = 58, Wild Draw 12 = 74, Wild Reverse = 70, etc.).
+- ✅ `CardData.gd` (Resource): color, **array de tipos acumulables** (`CardType`), valor numérico, `draw_value`, `color_effect_name`, id único, y métodos `get_point_value()`, `is_wild()`, `has_type()`.
+- ✅ `Deck.gd`: colección de `CardData` con separación estricta: `play()` (descarte normal), `discard()` (sin efecto), `burn()` (pila separada e irrecuperable), `reshuffle()` (remezcla automática con contador). Pilas separadas: `draw_pile`, `discard_pile`, `burn_pile`.
+- ✅ `PlayerState.gd`: mano, puntaje acumulado, estado narrativo (ACTIVE/ASCENDED/PENALIZED/ELIMINATED), flag de quema inicial por ronda (`has_used_initial_burn_this_round`), métodos `add_cards()`, `remove_card()`, `has_reached_hand_limit()`, `get_hand_point_value()`.
+- ✅ `StandardDeckGenerator.gd`: genera exactamente 128 cartas estándar (80 numéricas + 48 de efecto), con distribución correcta: 4 colores × 10 números × 2 copias, y 4 colores × 6 tipos de efecto × 2 copias.
+- ✅ Tests completos (39 tests, 236 asserts, 100% passing):
+  - `test_card_data.gd` (13 tests): puntuación multi-tipo, casos especiales (Wild Shift=50, Wild Draw 4=58, Wild Draw 12=74, Wild Reverse=70).
+  - `test_deck.gd` (10 tests): semántica de play/discard/burn, remezcla automática, cartas quemadas nunca retornan.
+  - `test_player_state.gd` (8 tests): manejo de mano, límite 25+, suma de puntaje, reset por ronda.
+  - `test_standard_deck_generator.gd` (8 tests): validación de conteo exacto (128), sin Wild Cards en mazo base, unicidad de ids.
 
 ### Capítulo 2 — Máquina de estados de partida y turnos
 
 **Objetivo:** lógica de turno funcional sin UI (se puede probar por consola/tests).
-**Estado:** Pendiente
+**Estado:** En progreso (2026-07-10)
 
 - `GameState.gd` (Autoload): fase actual (setup, selección de wilds, turno, cadena, fin de ronda).
 - **Jerarquía temporal explícita en el motor:** `GameState.gd` debe modelar Partida → Ronda → Vuelta → Turno como estados anidados reales, no como variables sueltas. En particular, `TurnManager.gd` necesita saber en todo momento "quién abrió la Vuelta actual" para poder detectar cuándo una Vuelta se completa (el turno vuelve a caer sobre ese jugador, **sin importar si algún jugador intermedio fue saltado** — la Vuelta tiene prioridad sobre el Turno, ver Game Bible 3.2), ya que de esto depende la duración de todos los efectos elementales (Cap. 6), la mecánica de Nature (juegos dobles), y la ventana de la quema inicial (ver punto siguiente).
@@ -331,6 +335,8 @@ La Game Bible (sección 3.2) define cuatro unidades de tiempo anidadas: **Partid
 - [x] ~~Decisión de lenguaje: GDScript puro vs. mezcla con C#~~ — **Resuelto: híbrido confirmado.** GDScript para el Core Engine, C# para IA de oponentes (ver sección 0.2 y Cap. 10).
 - [x] ~~Alcance del multijugador: ¿local únicamente en la v1, o online desde el inicio?~~ — **Resuelto:** el juego contempla ambos desde el diseño: Partida Rápida local (IA o amigos, hotseat), salas Online, y Modo Campaña local (Cap. 12). El orden de implementación real entre Cap. 11 (Online) y Cap. 12 (Campaña) queda abierto — ver punto siguiente.
 - [x] ~~Setup completo del Capítulo 0~~ — **Resuelto:** entorno, repo, estructura y constantes globales completados el 2026-07-10. Repo: https://github.com/im-gitLuv/UnoWilder
+- [x] ~~Enums: ¿fuente única de verdad en globals.gd o archivos separados en core/enums/?~~ — **Resuelto (2026-07-10):** enums viven exclusivamente en `autoloads/globals.gd` (Autoload `Globals`). La carpeta `core/enums/` queda sin archivos por ahora — no se duplican enums para evitar segunda fuente de verdad.
+- [x] ~~Tests del Cap. 1: ¿pasan todos?~~ — **Resuelto (2026-07-10):** 39/39 tests passing (236 asserts), 100% éxito. Modelos de datos validados contra Game Bible 3.12 y 4.1-4.3. CardData, Deck, PlayerState, StandardDeckGenerator listos para Cap. 2.
 - [ ] Catálogo definitivo de tipos de eventos random para el grito de UNO (Cap. 6) — la Game Bible define 4 categorías amplias; falta el detalle fino de cada variante concreta.
 - [ ] Orden de prioridad real de implementación entre Cap. 11 (Multijugador Online) y Cap. 12 (Modo Campaña) — ambos están definidos pero no se ha decidido cuál se aborda primero después del Core Engine (Cap. 1–7) y la IA (Cap. 10).
 - [ ] Mapa de gameplay del Modo Campaña (Cap. 12): niveles concretos, catálogo de bosses con sus penalizaciones temáticas específicas, y diseño de los puzzles — documento aún no producido.
