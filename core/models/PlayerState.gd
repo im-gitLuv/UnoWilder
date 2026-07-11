@@ -73,6 +73,14 @@ func reset_for_new_round() -> void:
 	has_used_initial_burn_this_round = false
 
 
+## Entrega la mano completa para reintegrarla a The Wild Deck al finalizar una
+## Ronda. No Quema ni Descarta cartas: todas siguen disponibles en la Partida.
+func release_hand() -> Array[CardData]:
+	var released := hand.duplicate()
+	hand.clear()
+	return released
+
+
 func _to_string() -> String:
 	return "PlayerState(%s, hand=%d cartas, score=%d, status=%s)" % [
 		player_name, hand_size(), score, Status.keys()[status]

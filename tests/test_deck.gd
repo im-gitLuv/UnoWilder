@@ -91,6 +91,41 @@ func test_draw_returns_fewer_cards_if_deck_truly_exhausted() -> void:
 	assert_eq(drawn.size(), 0)
 
 
+func test_draw_one_without_reshuffle_does_not_move_discard_pile() -> void:
+	var discarded := _make_dummy_card("discarded")
+	deck.discard(discarded)
+	var drawn := deck.draw_one_without_reshuffle()
+	assert_null(drawn)
+	assert_eq(deck.discard_pile_count(), 1)
+	assert_eq(deck.reshuffles_this_round, 0)
+
+
+func test_burn_random_discard_cards_moves_requested_cards_to_burn_pile() -> void:
+	for i in range(5):
+		deck.discard(_make_dummy_card("c%d" % i))
+	var burned := deck.burn_random_discard_cards(2)
+	assert_eq(burned.size(), 2)
+	assert_eq(deck.burn_pile_count(), 2)
+	assert_eq(deck.discard_pile_count(), 3)
+
+
+func test_take_all_unburned_cards_excludes_burn_pile() -> void:
+	var draw_card := _make_dummy_card("draw")
+	var discard_card := _make_dummy_card("discard")
+	var burned_card := _make_dummy_card("burned")
+	deck.draw_pile.append(draw_card)
+	deck.discard(discard_card)
+	deck.burn(burned_card)
+
+	var recovered := deck.take_all_unburned_cards()
+	assert_eq(recovered.size(), 2)
+	assert_true(recovered.has(draw_card))
+	assert_true(recovered.has(discard_card))
+	assert_false(recovered.has(burned_card))
+	assert_eq(deck.draw_pile_count(), 0)
+	assert_eq(deck.discard_pile_count(), 0)
+
+
 func test_burn_multiple() -> void:
 	var cards: Array[CardData] = [_make_dummy_card("a"), _make_dummy_card("b"), _make_dummy_card("c")]
 	deck.burn_multiple(cards)

@@ -90,6 +90,7 @@ Fórmula general: Wilds nuevas insertadas por ronda = jugadores × 2 × 4 = juga
 Persistencia entre rondas: al terminar una ronda, las Wild Cards seleccionadas no se devuelven al Wild Codex. Todas las copias que no fueron quemadas durante la ronda permanecen dentro de The Deck, se remezclan junto con el resto de la baraja, y siguen disponibles para aparecer en las rondas siguientes de la misma partida.
 El Wild Codex solo se "abre" de nuevo para elegir cartas nuevas que añadir — nunca para retirar lo ya elegido. Cada ronda nueva simplemente suma las Wild Cards recién seleccionadas por cada jugador a las que ya estaban circulando desde rondas anteriores.
 Esto mantiene el misterio de fondo durante toda la partida: un jugador solo conoce con certeza las wilds que él mismo eligió (en cualquier ronda) y las que ya se han revelado en mesa; nunca conoce el pool completo que su oponente fue seleccionando ronda tras ronda.
+Ciclo persistente de The Wild Deck entre Rondas: al terminar una Ronda se calcula y otorga su puntuación. Si la Partida no ha terminado, toda carta no quemada —las cartas de las manos, de la pila de descartes y de la pila de robo— vuelve a The Wild Deck como un único mazo persistente. The Wild Deck conserva memoria de las copias Wild que han entrado y de todas las cartas quemadas, que nunca regresan. Antes del siguiente reparto de 7 cartas, el Wild Codex se abre de nuevo y las Wild Cards recién seleccionadas se añaden a ese mismo mazo persistente; solo entonces The Wild Deck lo baraja y comienza la nueva Ronda.
 Ejemplo: en una partida de 2 jugadores, en la Ronda 1 el Jugador A elige Draw 4 y Wild Shift, y el Jugador B elige Draw 6 y Reverse Wild. Durante la Ronda 1 se queman las 4 copias de Wild Shift y 2 de las 4 copias de Reverse Wild. Al empezar la Ronda 2, The Deck ya no tiene ninguna copia de Wild Shift en circulación (se quemaron todas), pero sí conserva las 2 copias restantes de Reverse Wild mezcladas en la baraja, más las 4 copias de Draw 6 que no se quemaron. A esto se le suman las Wild Cards nuevas que A y B elijan para la Ronda 2.
 
 3.6 Flujo básico de turno
@@ -112,6 +113,8 @@ Si en este proceso el jugador llega a acumular 25 cartas o más en mano, pierde 
 Remezcla: si The Wild Deck se queda sin cartas para robar, toma toda la pila de descartes (todo lo que fue jugado o descartado, nunca lo quemado) y la vuelve a barajar como nueva pila de robo. Esto solo puede ocurrir una vez por ronda sin consecuencias adicionales.
 
 Si The Wild Deck se queda sin cartas por segunda vez en la misma ronda, se "enoja" (Primer Enojo): quema una tercera parte de la pila de descartes, elegida al azar, y da la ronda por finalizada de inmediato.
+
+Redondeo del Primer Enojo: la cantidad a Quemar se calcula como el tercio de la pila de descartes y se redondea al entero más cercano; todo valor decimal de `.5` o superior sube al entero siguiente. Ejemplos: 5 / 3 = 1.67, por lo que se Quemar 2 cartas; 4 / 3 = 1.33, por lo que se Quema 1 carta.
 
 En ese caso, gana la ronda quien tenga menos cartas en mano en ese momento.
 Si hay empate en cantidad de cartas, gana quien tenga menor puntaje acumulado en su mano (usando la tabla de puntuación de la sección 3.12).
@@ -150,7 +153,7 @@ Este es el corazón mecánico de UnoWilder.
 
 UnoWilder introduce múltiples tipos de cartas de robo, no solo Draw 2 y Wild Draw 4: existen Draw 1, Draw 2, Wild Draw 5, 6, 8, 10 y 12.
 Cuando un jugador juega cualquier carta con capacidad de robo (aunque sea Draw 1), se activa The Chain.
-El jugador amenazado (el siguiente en turno, que recibiría el robo) tiene la opción de responder si posee en mano una carta tipo Draw igual o superior al valor de robo actualmente en la cadena.
+El jugador amenazado (el siguiente en turno, que recibiría el robo) tiene la opción de responder con cualquier carta tipo Draw que posea en mano, sin importar su valor. Cada respuesta suma su valor de robo al total acumulado de The Chain.
 
 Si responde, su carta se suma a la cadena (el valor de robo acumulado aumenta y/o se traslada la amenaza al siguiente jugador).
 La cadena continúa pasando de jugador en jugador mientras cada uno pueda responder.
@@ -161,12 +164,12 @@ No tiene ninguna carta tipo Draw en mano, o
 Solo tiene cartas Draw de valor inferior al acumulado, o
 No tiene una carta Reverse válida para redirigir la cadena (ver 3.9).
 
-Ese jugador es quien finalmente roba todas las cartas acumuladas en la cadena (sujeto al efecto Fire si lo tiene activo, ver 3.10).
+Ese jugador es quien finalmente roba todas las cartas acumuladas en la cadena (sujeto al efecto Fire si lo tiene activo, ver 3.10). Después de recibir ese robo, pierde su Turno: no puede jugar una carta en ese mismo Turno y el juego continúa con el siguiente jugador según la dirección activa.
 
 3.9 Reverse Card — Redirección de la Cadena
 
-Si el jugador que está a punto de recibir toda la cadena posee una carta Reverse del color correspondiente, puede jugarla como última respuesta.
-Efecto: la dirección del turno se invierte y la cadena completa recae sobre el jugador anterior (el penúltimo en la secuencia de la cadena) en lugar de sobre quien jugó el Reverse.
+Si el jugador que está a punto de recibir toda la cadena posee una carta Reverse del color correspondiente, puede jugarla como respuesta. Una Wild Card que posea el efecto Reverse cuenta como Reverse una vez que su color haya sido declarado.
+Efecto: la dirección del turno se invierte y la cadena completa recae sobre el jugador anterior (el penúltimo en la secuencia de la cadena) en lugar de sobre quien jugó el Reverse. The Chain no termina: el jugador redirigido conserva la oportunidad de responder con cualquier Draw o con otro Reverse válido. El Reverse se registra como un eslabón de la Chain, pero no suma cartas al valor de robo acumulado.
 Esto convierte al Reverse en una pieza defensiva de altísimo valor táctico dentro de la Cadena, más allá de su función clásica de invertir el sentido del juego.
 
 3.10 Sistema Elemental (efectos de las Wild Cards)

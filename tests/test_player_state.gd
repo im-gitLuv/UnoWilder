@@ -61,5 +61,16 @@ func test_reset_for_new_round_resets_burn_flag() -> void:
 	assert_false(player.has_used_initial_burn_this_round)
 
 
+func test_release_hand_returns_cards_and_clears_hand() -> void:
+	var first_card := _make_number_card(1)
+	var second_card := _make_number_card(2)
+	player.add_cards([first_card, second_card])
+	var released := player.release_hand()
+	assert_eq(released.size(), 2)
+	assert_true(released.has(first_card))
+	assert_true(released.has(second_card))
+	assert_eq(player.hand_size(), 0)
+
+
 func test_default_status_is_active() -> void:
 	assert_eq(player.status, PlayerState.Status.ACTIVE)

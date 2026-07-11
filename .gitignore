@@ -1,3 +1,6 @@
+#docs instrucctions
+/docs/work_*.md
+
 # Godot 4+ specific ignores
 .godot/
 .nomedia

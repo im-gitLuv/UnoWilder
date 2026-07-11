@@ -48,9 +48,17 @@ func draw(n: int = 1) -> Array[CardData]:
 			if not reshuffled:
 				# No hay nada en descarte tampoco: no quedan cartas en el sistema.
 				break
-		drawn.append(draw_pile.pop_back())
+		drawn.append(draw_one_without_reshuffle())
 
 	return drawn
+
+
+## Roba una sola carta sin intentar Remezclar. TurnManager usa este método para
+## decidir si corresponde una Remezcla, el Primer Enojo o el Segundo Enojo.
+func draw_one_without_reshuffle() -> CardData:
+	if draw_pile.is_empty():
+		return null
+	return draw_pile.pop_back()
 
 
 ## Jugar (3.3): mueve la carta desde donde esté (se asume ya removida de la mano
@@ -78,6 +86,37 @@ func burn(card: CardData) -> void:
 func burn_multiple(cards: Array[CardData]) -> void:
 	for c in cards:
 		burn(c)
+
+
+## Quema una cantidad aleatoria de cartas del descarte. Se usa exclusivamente en
+## los Enojos: no puede tocar cartas que ya estén en la pila de quemadas.
+func burn_random_discard_cards(count: int) -> Array[CardData]:
+	var burned: Array[CardData] = []
+	discard_pile.shuffle()
+
+	for i in range(mini(count, discard_pile.size())):
+		var card: CardData = discard_pile.pop_back()
+		burn(card)
+		burned.append(card)
+
+	return burned
+
+
+## Reúne las cartas no quemadas que siguen dentro de este Deck y vacía sus pilas
+## operativas. TurnManager añade a este resultado las manos al cerrar una Ronda.
+func take_all_unburned_cards() -> Array[CardData]:
+	var cards: Array[CardData] = []
+	cards.append_array(draw_pile)
+	cards.append_array(discard_pile)
+	draw_pile.clear()
+	discard_pile.clear()
+	return cards
+
+
+## Inserta cartas en la pila de robo sin mezclar. The Wild Deck debe barajarlas
+## después de incorporar las Wild Cards seleccionadas antes de cada Ronda.
+func add_to_draw_pile(cards: Array[CardData]) -> void:
+	draw_pile.append_array(cards)
 
 
 ## Remezclar (3.3, 3.6): toma toda la pila de descartes y la convierte en la
