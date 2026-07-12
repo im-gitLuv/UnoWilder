@@ -60,6 +60,10 @@ func draw_one_without_reshuffle() -> CardData:
 		return null
 	return draw_pile.pop_back()
 
+func merge_discard_to_draw_pile() -> void:
+	draw_pile.append_array(discard_pile)
+	discard_pile.clear()
+	reshuffle()  # o shuffle_draw_pile()
 
 ## Jugar (3.3): mueve la carta desde donde esté (se asume ya removida de la mano
 ## por PlayerState) a la cima del descarte. SÍ debe aplicarse su efecto — pero
@@ -166,3 +170,9 @@ func discard_pile_count() -> int:
 
 func burn_pile_count() -> int:
 	return burn_pile.size()
+
+func add_cards(cards: Array[CardData]) -> void:
+	add_to_draw_pile(cards)  # reutiliza el que ya tienes
+
+func return_unburned_cards(cards: Array[CardData]) -> void:
+	add_to_draw_pile(cards)

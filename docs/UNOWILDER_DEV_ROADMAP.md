@@ -168,22 +168,18 @@ La Game Bible (sección 3.2) define cuatro unidades de tiempo anidadas: **Partid
 
 ### Capítulo 2 — Máquina de estados de partida y turnos
 
-**Objetivo:** lógica de turno funcional sin UI (se puede probar por consola/tests).
-**Estado:** En progreso (2026-07-10)
+**Objetivo:** lógica de turno funcional sin UI (se puede probar por consola/tests).  
+**Estado:** ✅ Completado (2026-07-12)
 
-- `GameState.gd` (Autoload): fase actual (setup, selección de wilds, turno, cadena, fin de ronda).
-- **Jerarquía temporal explícita en el motor:** `GameState.gd` debe modelar Partida → Ronda → Vuelta → Turno como estados anidados reales, no como variables sueltas. En particular, `TurnManager.gd` necesita saber en todo momento "quién abrió la Vuelta actual" para poder detectar cuándo una Vuelta se completa (el turno vuelve a caer sobre ese jugador, **sin importar si algún jugador intermedio fue saltado** — la Vuelta tiene prioridad sobre el Turno, ver Game Bible 3.2), ya que de esto depende la duración de todos los efectos elementales (Cap. 6), la mecánica de Nature (juegos dobles), y la ventana de la quema inicial (ver punto siguiente).
-- Cada Wild Card/efecto temporal debe registrar su duración como **"X Vueltas del jugador afectado"**, no como un contador global de turnos de mesa — dos jugadores distintos pueden tener el mismo efecto corriendo con distinta cantidad de Vueltas restantes en paralelo.
-- `TurnManager.gd`: orden de turno, dirección (para Reverse), validación de jugadas legales.
-- Implementar la mecánica de "quema inicial" (Game Bible 3.4), disponible **una vez por ronda** (no una vez por partida), usando `Deck.burn()`. La ventana se cierra en cuanto se completa la primera Vuelta de esa ronda: `TurnManager.gd` debe exponer un flag tipo `first_lap_completed_this_round` consultado antes de permitir la quema, de forma que un jugador saltado durante la primera Vuelta no pueda quemar aunque su primer Turno jugable ocurra ya en la segunda Vuelta.
-- **Arranque de la primera Vuelta de cada ronda:** al iniciar cada ronda, revelar la primera carta de la pila y **aplicar su efecto contra el primer jugador** como si The Wild Deck la hubiera jugado (Game Bible 3.6, punto 1) — cubre los casos de Draw (dispara Cadena), Skip, Reverse (invierte el sentido antes de que nadie juegue) y Wild (The Wild Deck escoge color al azar).
-- **Robo continuo hasta poder jugar:** cuando un jugador no puede jugar, `TurnManager` debe robar cartas **en bucle** hasta obtener una jugable, no una sola vez (Game Bible 3.6, punto 4).
-- **Remezcla escalonada:** lógica en `Deck.gd`/`WildDeck.gd` para reconstruir la pila de robo desde el descarte cuando se agota, con contador `reshuffles_this_round`. Al segundo intento en la misma ronda (**Primer Enojo**): quemar un tercio aleatorio del descarte y finalizar esa ronda de inmediato, resolviendo el ganador por menor cantidad de cartas (o menor puntaje en caso de empate). Si el patrón de remezcla doble se repite en **otra ronda posterior** de la misma partida (**Segundo Enojo**): quemar todo el descarte, finalizar esa ronda, y además **finalizar la partida completa**, otorgando la victoria al jugador con más puntos acumulados hasta ese momento — ver Game Bible 3.6. Esto requiere que `GameState.gd` mantenga un flag a nivel de **Partida** (`first_enojo_occurred_this_match`), no solo a nivel de Ronda, para poder detectar la repetición entre rondas distintas.
-- **Ciclo persistente de The Wild Deck:** al finalizar una Ronda y antes de la siguiente selección del Wild Codex, `TurnManager.gd` devuelve al mazo único todas las cartas no quemadas de las manos, la pila de descartes y la pila de robo. Las nuevas Wild Cards de la selección pre-ronda se insertan después en ese mismo mazo y antes del reparto. Las cartas quemadas siguen excluidas de forma permanente (Game Bible 3.5).
-- **Redondeo del Primer Enojo:** `Deck.gd` debe calcular el tercio de descarte con redondeo convencional al entero más cercano, subiendo desde `.5` (Game Bible 3.6).
-- **Adelanto mínimo de The Chain para pruebas del Cap. 2:** crear `ChainManager.gd` para acumular el robo, registrar sus eslabones y resolver respuestas. Cualquier Draw puede responder y suma su valor; un Reverse válido invierte la dirección, redirige la amenaza al eslabón anterior y mantiene The Chain activa. El jugador que recibe el robo acumulado pierde su Turno (Game Bible 3.8–3.9). La ampliación visual y los casos avanzados permanecen en el Capítulo 5.
-- **Límite de mano (25+), confirmado sin nota abierta:** chequeo tras cada robo (por cualquier motivo: robo continuo o Cadena grande); si un jugador alcanza 25+ cartas, se marca como "perdedor de la ronda" y su mano completa se quema (sin bono de puntos para el resto, salvo evento narrativo opcional de The Wild Deck — ver Cap. 13). En partidas de más de 2 jugadores, **solo ese jugador queda fuera** y la ronda continúa con normalidad entre el resto, salvo que quede un único jugador en pie (gana por defecto). En partidas de exactamente 2 jugadores, la ronda termina de inmediato y gana el jugador restante.
-- Tests: partida simulada de 2–4 jugadores sin cartas Wild, solo con el mazo estándar, cubriendo remezcla simple, Primer Enojo, Segundo Enojo (across múltiples rondas), la ventana de quema limitada a la primera Vuelta (incluyendo el caso de jugador saltado), y el límite de 25 cartas en partidas de 2 y de 3+ jugadores.
+- ✅ `GameState.gd` (Autoload): fase actual y jerarquía temporal explícita modelada.
+- ✅ `TurnManager.gd`: orden de turno, dirección, validación de jugadas, robo continuo, quema inicial con ventana de primera Vuelta (incluyendo caso de jugador saltado).
+- ✅ `ChainManager.gd`: adelanto mínimo funcional (respuestas Draw + Reverse).
+- ✅ Lógica de remezclas, Primer y Segundo Enojo (con flag a nivel Partida).
+- ✅ Límite de mano 25+ con manejo diferenciado (2 vs 3+ jugadores).
+- ✅ Tests completos en `test_turn_manager.gd` (partidas simuladas 2-4 jugadores, quema, Enfados, ventana de primera Vuelta, Chain básico, límite de mano).
+- Correcciones de tipado `Array[CardData]` y casts de enum.
+
+**Notas de implementación:** Jerarquía Vuelta/Turno y persistencia entre rondas validadas contra Game Bible 3.2, 3.4, 3.5 y 3.6.
 
 ### Capítulo 3 — Prototipo jugable en UI básica ("gris box")
 

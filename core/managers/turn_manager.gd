@@ -266,7 +266,7 @@ func _resolve_double_reshuffle() -> void:
 	if is_second_enojo:
 		var match_winner_index := _get_highest_score_player_index()
 		if match_winner_index >= 0:
-			game_state.end_match(game_state.players[match_winner_index])
+			game_state.end_round(winner_index, true)
 	else:
 		game_state.first_enojo_occurred_this_match = true
 
@@ -292,7 +292,7 @@ func _end_round_with_winner(winner_index: int) -> void:
 		if player_index != winner_index:
 			round_points += game_state.players[player_index].get_hand_point_value()
 	winner.score += round_points
-	game_state.end_round(winner)
+	game_state.end_round(winner_index, false)
 
 
 func _get_lowest_hand_player_index() -> int:

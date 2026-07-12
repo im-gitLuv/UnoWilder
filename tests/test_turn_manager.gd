@@ -159,15 +159,69 @@ func test_hand_limit_eliminates_player_and_burns_their_hand() -> void:
 	assert_eq(state.get_active_player_indices().size(), 2)
 
 
-func test_round_end_awards_points_and_next_round_recovers_unburned_cards() -> void:
+func test_round_end_recovers_unburned_cards_for_multiple_rounds() -> void:
+    # Ronda 1
 	_start_manual_turn()
-	var winning_card := _make_number(Globals.CardColor.RED, 7)
-	var opponent_card := _make_number(Globals.CardColor.BLUE, 5)
-	_give_card(0, winning_card)
-	_give_card(1, opponent_card)
-	assert_true(manager.play_card(0, winning_card))
-	assert_eq(state.players[0].score, 5)
-	assert_eq(state.phase, state.Phase.ROUND_ENDED)
-	assert_true(manager.start_round(1))
-	assert_eq(deck.draw_pile_count(), 3)
+	var winning_card1 := _make_number(Globals.CardColor.RED, 7)
+	var opponent_card1 := _make_number(Globals.CardColor.BLUE, 5)
+	var burned_card := _make_number(Globals.CardColor.GREEN, 9)
+
+	_give_card(0, winning_card1)
+	_give_card(1, opponent_card1)
+	_give_card(1, burned_card)
+
+	assert_true(manager.play_card(0, winning_card1))
+	deck.burn(burned_card)
+
+	state.end_round(0)
+
+	assert_eq(deck.burn_pile_count(), 1)
+	assert_gt(deck.draw_pile_count(), 2, "Deben volver cartas no quemadas")
+
+	# Ronda 2
+	assert_true(state.start_round())
 	assert_eq(deck.discard_pile_count(), 0)
+	assert_false(state.players[0].has_used_initial_burn_this_round)
+
+	var winning_card2 := _make_number(Globals.CardColor.BLUE, 3)
+	_give_card(0, winning_card2)
+	assert_true(manager.play_card(0, winning_card2))
+
+	state.end_round(0)
+	assert_eq(deck.burn_pile_count(), 1)  # no debe aumentar
+
+func test_first_lap_detection_and_skipped_player_burn_window() -> void:
+	_start_manual_turn()
+
+	var skip := _make_effect(Globals.CardColor.RED, "skip")
+	var final_card := _make_number(Globals.CardColor.RED, 6)
+	var missed_burn_card := _make_number(Globals.CardColor.RED, 2)
+
+	_give_card(0, skip)
+	_give_card(0, _make_number(Globals.CardColor.RED, 1))
+	_give_card(1, missed_burn_card)
+	_give_card(2, final_card)
+	_give_card(2, _make_number(Globals.CardColor.RED, 3))
+
+	assert_true(manager.play_card(0, skip))
+	assert_eq(state.current_player_index, 2)
+
+	assert_true(manager.play_card(2, final_card))
+
+	assert_true(state.first_lap_completed_this_round, "La primera Vuelta debe marcarse completada")
+	assert_false(manager.use_initial_burn(1, [missed_burn_card]), 
+					"Jugador saltado no debe poder quemar después de completada la primera Vuelta")
+
+
+func test_second_enojo_ends_full_match() -> void:
+	_start_manual_turn()
+	state.first_enojo_occurred_this_match = true
+	deck.discard_pile.clear()
+	for i in range(5):
+		deck.discard(_make_number(Globals.CardColor.RED, i))
+	deck.reshuffles_this_round = 1
+
+	var result = manager.resolve_turn_without_playable_card(0)
+	assert_true(result)
+	assert_eq(state.phase, state.Phase.MATCH_ENDED)
+	assert_eq(deck.burn_pile_count(), 5)  # todo quemado

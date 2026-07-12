@@ -148,9 +148,35 @@ func get_active_player_indices() -> Array[int]:
 
 ## Centraliza el cierre de Ronda para que UI y futuras capas de puntuación reaccionen
 ## mediante señales, sin que este estado global dependa de una escena.
-func end_round(winner: PlayerState) -> void:
+## Centraliza el cierre de Ronda. Devuelve las cartas no quemadas al mazo persistente.
+## Centraliza el cierre de Ronda. 
+## El parámetro `was_double_reshuffle_this_round` indica si esta ronda terminó por doble remezcla.
+func end_round(winner_index: int, was_double_reshuffle_this_round: bool = false) -> void:
+	if not _is_valid_player_index(winner_index):
+		return
+
+	var winner = players[winner_index]
+
+	# Ciclo persistente de The Wild Deck (Game Bible 3.5)
+	for player in players:
+		if player.status != PlayerState.Status.ELIMINATED:
+			var released_hand: Array[CardData] = player.release_hand()
+			deck.return_unburned_cards(released_hand)
+
+	deck.merge_discard_to_draw_pile()
+
 	_set_phase(Phase.ROUND_ENDED)
 	round_ended.emit(winner)
+
+	for player in players:
+		player.reset_for_new_round()
+
+	# Lógica de Enfados
+	if was_double_reshuffle_this_round:
+		if first_enojo_occurred_this_match:
+			end_match(winner)          # Segundo Enojo
+		else:
+			first_enojo_occurred_this_match = true  # Primer Enojo
 
 
 ## Señala el final definitivo de la Partida, incluido el cierre por Segundo Enojo.
