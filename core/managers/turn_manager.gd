@@ -30,12 +30,16 @@ func start_round(first_player_index: int) -> bool:
 		return false
 
 	_pending_first_player_index = first_player_index
+
+	# Recuperar TODO lo no quemado (manos + draw + discard)
 	var persistent_cards: Array[CardData] = game_state.deck.take_all_unburned_cards()
 
 	for player in game_state.players:
 		persistent_cards.append_array(player.release_hand())
 
 	game_state.deck.add_to_draw_pile(persistent_cards)
+	game_state.deck.shuffle()   # ← importante
+
 	return true
 
 
